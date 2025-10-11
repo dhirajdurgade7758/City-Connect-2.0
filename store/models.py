@@ -26,7 +26,7 @@ class StoreOffer(models.Model):
     added_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="offers_added")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    blockchain_item_id = models.IntegerField(blank=True, null=True, unique=True, help_text="The unique ID of this item on the blockchain.")
     def is_available(self):
         return (
             self.is_active
@@ -54,7 +54,7 @@ class Redemption(models.Model):
     redeemed_at = models.DateTimeField(auto_now_add=True)
     voucher_code = models.CharField(max_length=20, unique=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='completed')
-
+    blockchain_item_id = models.IntegerField(blank=True, null=True, unique=True, help_text="The unique ID of this item on the blockchain.")
     def save(self, *args, **kwargs):
         if not self.voucher_code:
             self.voucher_code = str(uuid.uuid4()).split('-')[0].upper()

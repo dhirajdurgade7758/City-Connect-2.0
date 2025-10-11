@@ -60,13 +60,51 @@ def admin_department_required(view_func):
     return wrapper
 
 
+from django.db.models import Count, Q
+from django.utils import timezone
+from django.db.models.functions import TruncMonth
+import json
+
 @login_required
 @admin_department_required
 def department_dashboard(request, department):
-    issues = IssuePost.objects.filter(department=department).order_by('-created_at')
+    # Base queryset for the specific department
+    issues_qs = IssuePost.objects.filter(department=department)
+
+    # 1. Aggregate status counts in a single efficient query
+    status_counts = issues_qs.aggregate(
+        pending_count=Count('id', filter=Q(status='pending')),
+        in_progress_count=Count('id', filter=Q(status='in_progress')),
+        resolved_count=Count('id', filter=Q(status='resolved')),
+        total_count=Count('id')
+    )
+
+    # 2. Prepare data for a time-series chart (e.g., issues per month for the last 6 months)
+    six_months_ago = timezone.now() - timezone.timedelta(days=180)
+    monthly_issues = (
+        issues_qs
+        .filter(created_at__gte=six_months_ago)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+
+    # Format data for Chart.js
+    monthly_chart_labels = [m['month'].strftime('%b %Y') for m in monthly_issues]
+    monthly_chart_data = [m['count'] for m in monthly_issues]
+
+    # The list of issues for the data table
+    issues_list = issues_qs.order_by('-created_at')
+    department_display_name = department.replace('_', ' ').title()
     context = {
-        'issues': issues,
         'department': department,
+        'issues': issues_list,
+        'status_counts': status_counts,
+        'department_display_name': department_display_name,
+        # Pass chart data as JSON to be safely used in JavaScript
+        'monthly_chart_labels': json.dumps(monthly_chart_labels),
+        'monthly_chart_data': json.dumps(monthly_chart_data),
     }
     return render(request, 'admin_panel/dashboard.html', context)
 
@@ -212,21 +250,19 @@ def create_store_offer(request):
             try:
                 # 1. Prepare the payload for the blockchain API
                 # The field names must match what the API expects: name, cost, quantity
-                payload = {
-                    'name': offer.name,
-                    'cost': offer.coins_required,
-                    'quantity': offer.stock
-                }
+                payload = { 'name': offer.name, 'cost': offer.coins_required, 'quantity': offer.stock }
+                response = requests.post(f"{NODE_API_URL}/api/store/items", json=payload, timeout=5)
+                response.raise_for_status()
                 
-                # 2. Make the POST request to the Node.js server
-                response = requests.post(
-                    f"{NODE_API_URL}/api/store/items",
-                    json=payload,
-                    timeout=5
-                )
-                response.raise_for_status() # Check for any HTTP errors
-                
-                messages.success(request, f"Offer '{offer.name}' was created and successfully synced with the blockchain store.")
+                # ⭐ GET AND SAVE THE BLOCKCHAIN ID
+                response_data = response.json()
+                blockchain_id = response_data.get('item', {}).get('id')
+                if blockchain_id is not None:
+                    offer.blockchain_item_id = blockchain_id
+                    offer.save() # Save the new ID
+                    messages.success(request, f"Offer '{offer.name}' created and synced with blockchain (ID: {blockchain_id}).")
+                else:
+                     messages.warning(request, f"Offer '{offer.name}' created, but failed to get an ID from the blockchain.")
 
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to sync new store offer '{offer.name}' with blockchain. Error: {e}")

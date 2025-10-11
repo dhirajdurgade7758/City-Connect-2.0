@@ -1,38 +1,4 @@
 {% extends 'admin_panel/base.html' %}
-{% comment %} <h1>{{ department|capfirst }} Department Dashboard</h1>
-<a href="{% url 'admin_logout' %}">Logout</a>
-<a href="{% url "my_map_view" %}">view issues on map</a>
-
-
-<table border="1">
-  <thead>
-    <tr>
-      <th>Title</th>
-      <th>Reported Location</th>
-      <th>view on map</th>
-      <th>Status</th>
-      <th>Created At</th>
-      <th>Details</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for issue in issues %}
-    <tr>
-      <td>{{ issue.title }}</td>
-      <td>{{ issue.location_name }}</td>
-      <td><a href="{{issue.location_map_url}}">View on Map</a></td>
-      <td>{{ issue.get_status_display }}</td>
-      <td>{{ issue.created_at }}</td>
-      <td><a href="{% url 'issue_detail' department issue.id %}">View / Update</a></td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="5">No issues found.</td></tr>
-    {% endfor %}
-  </tbody>
-</table> {% endcomment %}
-
-
-
 {% load static %}
 
 {% block title %}{{ department|capfirst }} Department Dashboard{% endblock title %}
@@ -49,13 +15,20 @@
     font-weight: 700;
   }
   .stat-card i {
-    font-size: 2.5rem;
-    opacity: 0.3;
+    font-size: 3rem;
+    opacity: 0.2;
   }
   .border-start-primary { border-left: 5px solid var(--bs-primary); }
   .border-start-danger { border-left: 5px solid var(--bs-danger); }
   .border-start-warning { border-left: 5px solid var(--bs-warning); }
   .border-start-success { border-left: 5px solid var(--bs-success); }
+  
+  /* Ensure charts are responsive */
+  .chart-container {
+    position: relative;
+    height: 350px; /* Adjust height as needed */
+    width: 100%;
+  }
 </style>
 {% endblock extra_head %}
 
@@ -65,7 +38,7 @@
 
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h1 class="h2 mb-0">Welcome to the **{{ department|capfirst }} Department**</h1>
+      <h1 class="h2 mb-0">Welcome to {{ department_display_name}} Department</h1>
       <p class="text-muted mb-0">Live overview of citizen-reported issues for Gwalior.</p>
     </div>
     <a href="{% url 'my_map_view' %}" class="btn btn-lg btn-outline-primary d-none d-md-inline-flex">
@@ -73,47 +46,47 @@
     </a>
   </div>
 
-  {# Note: You'll need to pass these counts from your view #}
-  <div class="row g-3 mb-4">
+  {# Stat cards now use the aggregated data from the view #}
+  <div class="row g-4 mb-4">
     <div class="col-xl-3 col-md-6">
-      <div class="card stat-card shadow-sm border-start-primary">
+      <div class="card stat-card shadow-sm border-start-primary h-100">
         <div class="card-body">
           <div>
             <div class="text-muted text-uppercase small">Total Issues</div>
-            <span class="display-4">{{ issues.count }}</span>
+            <span class="display-4">{{ status_counts.total_count }}</span>
           </div>
           <i class="bi bi-journal-text"></i>
         </div>
       </div>
     </div>
     <div class="col-xl-3 col-md-6">
-      <div class="card stat-card shadow-sm border-start-danger">
+      <div class="card stat-card shadow-sm border-start-danger h-100">
         <div class="card-body">
           <div>
             <div class="text-muted text-uppercase small">Pending Review</div>
-            <span class="display-4">{{ pending_count|default:'0' }}</span>
+            <span class="display-4">{{ status_counts.pending_count }}</span>
           </div>
           <i class="bi bi-exclamation-triangle"></i>
         </div>
       </div>
     </div>
     <div class="col-xl-3 col-md-6">
-      <div class="card stat-card shadow-sm border-start-warning">
+      <div class="card stat-card shadow-sm border-start-warning h-100">
         <div class="card-body">
           <div>
             <div class="text-muted text-uppercase small">In Progress</div>
-            <span class="display-4">{{ in_progress_count|default:'0' }}</span>
+            <span class="display-4">{{ status_counts.in_progress_count }}</span>
           </div>
           <i class="bi bi-tools"></i>
         </div>
       </div>
     </div>
     <div class="col-xl-3 col-md-6">
-      <div class="card stat-card shadow-sm border-start-success">
+      <div class="card stat-card shadow-sm border-start-success h-100">
         <div class="card-body">
           <div>
             <div class="text-muted text-uppercase small">Resolved</div>
-            <span class="display-4">{{ resolved_count|default:'0' }}</span>
+            <span class="display-4">{{ status_counts.resolved_count }}</span>
           </div>
           <i class="bi bi-check2-circle"></i>
         </div>
@@ -121,6 +94,35 @@
     </div>
   </div>
 
+  {# Charts Section #}
+  <div class="row g-4 mb-4">
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white py-3">
+          <h5 class="mb-0"><i class="bi bi-pie-chart-fill me-2"></i>Issues by Status</h5>
+        </div>
+        <div class="card-body d-flex align-items-center justify-content-center">
+          <div class="chart-container">
+            <canvas id="statusPieChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white py-3">
+          <h5 class="mb-0"><i class="bi bi-bar-chart-line-fill me-2"></i>Monthly Issue Trends</h5>
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="monthlyIssuesChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Data Table Section #}
   <div class="card shadow-sm">
     <div class="card-header bg-white py-3">
       <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Issue Tracker</h5>
@@ -142,15 +144,18 @@
             <tr>
               <td><strong>{{ issue.title }}</strong></td>
               <td>
-                <a href="{{issue.location_map_url}}" target="_blank" class="text-decoration-none">
-                  <i class="bi bi-geo-alt-fill me-1 text-danger"></i>{{ issue.location_name }}
+                {% if issue.location_map_url %}
+                <a href="{{ issue.location_map_url }}" target="_blank" class="text-decoration-none">
+                  <i class="bi bi-geo-alt-fill me-1 text-danger"></i>{{ issue.location_name|truncatechars:30 }}
                 </a>
+                {% else %}
+                <span class="text-muted">Not specified</span>
+                {% endif %}
               </td>
               <td>
-                {# Dynamic Status Badges for quick visual scanning #}
                 <span class="badge rounded-pill fs-6
-                  {% if issue.status == 'Resolved' %} bg-success-subtle text-success-emphasis border border-success-subtle
-                  {% elif issue.status == 'In Progress' %} bg-warning-subtle text-warning-emphasis border border-warning-subtle
+                  {% if issue.status == 'resolved' %} bg-success-subtle text-success-emphasis border border-success-subtle
+                  {% elif issue.status == 'in_progress' %} bg-warning-subtle text-warning-emphasis border border-warning-subtle
                   {% else %} bg-danger-subtle text-danger-emphasis border border-danger-subtle
                   {% endif %}">
                   {{ issue.get_status_display }}
@@ -177,19 +182,111 @@
       </div>
     </div>
   </div>
+
 </div>
 {% endblock content %}
 
 
 {% block extra_scripts %}
-{# Initialize the interactive DataTable #}
+{# 1. Include Chart.js library #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{# 2. Initialize the interactive DataTable #}
 <script>
   $(document).ready(function () {
-    // This line turns your simple table into a powerful, interactive one
     $('#issuesTable').DataTable({
-      "order": [[ 3, "desc" ]], // Default sort by the 'Reported On' column, newest first
-      "pageLength": 10 // Show 10 entries per page
+      "order": [[ 3, "desc" ]], // Default sort by 'Reported On'
+      "pageLength": 10
     });
   });
+</script>
+
+{# 3. Scripts for rendering the charts #}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // --- Pie Chart for Issue Status ---
+  const pieCtx = document.getElementById('statusPieChart').getContext('2d');
+  const statusData = {{ status_counts|safe }}; // Get data from the context
+
+  new Chart(pieCtx, {
+    type: 'doughnut', // 'pie' is also an option
+    data: {
+      labels: ['Pending', 'In Progress', 'Resolved'],
+      datasets: [{
+        label: 'Issue Status',
+        data: [
+          statusData.pending_count, 
+          statusData.in_progress_count, 
+          statusData.resolved_count
+        ],
+        backgroundColor: [
+          'rgba(220, 53, 69, 0.7)',  // Danger (Pending)
+          'rgba(255, 193, 7, 0.7)',   // Warning (In Progress)
+          'rgba(25, 135, 84, 0.7)'   // Success (Resolved)
+        ],
+        borderColor: [
+          'rgba(220, 53, 69, 1)',
+          'rgba(255, 193, 7, 1)',
+          'rgba(25, 135, 84, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: false,
+          text: 'Issue Status Distribution'
+        }
+      }
+    }
+  });
+
+
+  // --- Bar Chart for Monthly Trends ---
+  const barCtx = document.getElementById('monthlyIssuesChart').getContext('2d');
+  const monthlyLabels = JSON.parse('{{ monthly_chart_labels|escapejs }}');
+  const monthlyData = JSON.parse('{{ monthly_chart_data|escapejs }}');
+
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: monthlyLabels,
+      datasets: [{
+        label: 'Issues Reported',
+        data: monthlyData,
+        backgroundColor: 'rgba(13, 110, 253, 0.6)',
+        borderColor: 'rgba(13, 110, 253, 1)',
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            // Ensure only whole numbers are shown on the y-axis
+            stepSize: 1 
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
+
+});
 </script>
 {% endblock extra_scripts %}
