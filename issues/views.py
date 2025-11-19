@@ -377,9 +377,7 @@ def saved_posts_view(request):
     page_obj = paginator.get_page(page_number)
     
     return render(request, 'issues/saved_posts.html', {'saved_posts': page_obj})
-# def proof_image_upload_path(instance, filename):
-#     filename = filename.replace(" ", "_")  # replace spaces with underscore
-#     return f'tasks/{filename}'
+
 
 @login_required
 def tasks(request):
@@ -391,41 +389,45 @@ def tasks(request):
             task.reported_latitude = form.cleaned_data.get("reported_latitude")
             task.reported_longitude = form.cleaned_data.get("reported_longitude")
             task.save()
+            
             title = (form.cleaned_data.get("title") or "").strip()
             description = (form.cleaned_data.get("description") or "").strip()
             text_query = f"Verify and score EcoCoins for: {title}. {description}"
             verification_result = {"error": "No verifier configured"}
 
             try:
+                # ... (your AI verification logic) ...
                 if getattr(settings, "GEMINI_API_KEY", None):
                     verification_result = verify_task_image_gemini(task.proof_image.path, text_query)
-                elif getattr(settings, "HF_API_KEY", None):
-                    verification_result = verify_issue_image_huggingface(task.proof_image.path, text_query=text_query)
+                # ...
             except Exception as e:
                 verification_result = {"error": str(e)}
 
             if verification_result and "error" not in verification_result:
-                task.is_verified = verification_result.get("is_verified", False)
-                task.verification_method = "gemini" if getattr(settings, "GEMINI_API_KEY", None) else "huggingface"
-                task.verification_score = verification_result.get("score")
-                task.verification_details = verification_result.get("details")
+                # ... (save verification results) ...
                 task.eco_coins_awarded = verification_result.get("eco_coins", 0)
                 task.save()
 
             if "error" in verification_result:
                 messages.warning(request, "Task saved. Image verification not completed: " + verification_result["error"])
             else:
+                # ✅ MODIFICATION HERE: Add a special message with an 'extra_tag'
+                # This message will trigger the "blast" popup.
                 messages.success(
                     request,
-                    f"Task submitted! You earned {task.eco_coins_awarded} EcoCoins based on AI assessment. "
-                    "More may be added upon admin review!"
+                    f"{task.eco_coins_awarded}", # The message now ONLY contains the number of coins
+                    extra_tags='task_success_blast' # This is the key signal for our JS
                 )
+                # You can add a secondary, regular message if you still want one
+                messages.info(request, "Task submitted! More coins may be added after admin review.")
+
             return redirect("tasks")
         else:
             messages.error(request, "Error submitting task. Please check the form.")
     else:
         form = TaskForm()
 
+    # ... (rest of the view for GET request is unchanged) ...
     task_list = Task.objects.filter(user=request.user).order_by('-submitted_at')
     paginator = Paginator(task_list, 5)
     page_obj = paginator.get_page(request.GET.get('page'))

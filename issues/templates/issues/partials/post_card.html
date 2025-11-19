@@ -1,93 +1,93 @@
-<!-- core/partials/post_card.html -->
-<div class="complaint-card {% if post.status == 'resolved' %}accent-green{% endif %}" data-post-id="{{ post.id }}">
+<!-- issues/partials/post_card.html -->
+
+<!-- The main tweet-like card structure -->
+<div class="tweet-card" data-post-id="{{ post.id }}">
     
-    <!-- Post Header -->
-    <div class="card-header">
-        <div class="avatar">
-            {% if post.user.profile.avatar %}
-                <img src="{{ post.user.profile.avatar.url }}" alt="{{ post.user.username }}">
-            {% else %}
-                <div class="avatar-initial">{{ post.user.username|first|upper }}</div>
-            {% endif %}
-        </div>
-        <div class="user-info">
-            <h3>{{ post.user.username }}</h3>
-            <div class="meta-info">
-                <span class="icon-location"></span>
-                <span>{{ post.location_name }}</span>
-                <span>•</span>
-                <span>{{ post.created_at|timesince }} ago</span>
+    <!-- Tweet Header: Avatar, User Info, and Status Badge -->
+    <div class="tweet-header">
+        
+        <!-- Avatar and User Info Group -->
+        <div class="user-info-group">
+            <div class="avatar">
+                {% if post.user.profile.avatar %}
+                    <img src="{{ post.user.profile.avatar.url }}" alt="{{ post.user.username }}" loading="lazy">
+                {% else %}
+                    <div class="avatar-initial">{{ post.user.username|first|upper }}</div>
+                {% endif %}
+            </div>
+            <div class="user-details">
+                <span class="username">{{ post.user.username }}</span>
+                <div class="meta-info">
+                    <span class="icon-location bi bi-geo-alt-fill"></span>
+                    <span class="location-name">{{ post.location_name }}</span>
+                    <span class="time-ago">• {{ post.created_at|timesince }} ago</span>
+                </div>
             </div>
         </div>
+
+        <!-- Status Badge -->
         <div class="status-badge status-{{ post.status|lower|cut:' ' }}">
             {{ post.status }}
         </div>
     </div>
     
-    <!-- Post Image -->
+    <!-- Post Body / Content -->
+    <div class="tweet-body">
+        <h2 class="post-title">{{ post.title }}</h2>
+        <p class="post-description">{{ post.description }}</p>
+    </div>
+
+    <!-- Post Media (Image) -->
     {% if post.image %}
-    <div class="media-carousel">
-        <div class="media-container">
-            <div class="media-slides">
-                <div class="media-slide">
-                    <img src="{{ post.image.url }}" alt="{{ post.title }}">
-                </div>
-            </div>
-        </div>
+    <div class="post-media">
+        <img src="{{ post.image.url }}" alt="{{ post.title }}" class="media-image" loading="lazy">
     </div>
     {% endif %}
     
-    <!-- Post Body -->
-    <div class="card-content">
-        <h2>{{ post.title }}</h2>
-        <p>{{ post.description }}</p>
-    </div>
-    
-    <!-- Actions -->
-    <div class="card-actions d-flex align-items-center justify-content-between mt-2">
+    <!-- Actions Bar (Like, Comment, Save, Share) -->
+    <div class="tweet-actions">
         
-        <!-- Left: Like + Comment -->
-        <div class="action-buttons d-flex align-items-center gap-2">
-            <!-- Like -->
+        <!-- Left: Like & Comment -->
+        <div class="action-buttons">
+            <!-- Like Button (HTMX powered) -->
             <button hx-post="{% url 'toggle_like' post.id %}"
-                hx-target="closest .complaint-card"
+                hx-target="closest .tweet-card"
                 hx-swap="outerHTML"
                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                class="btn btn-sm btn-outline-danger {% if post.is_liked_by %}active{% endif %}"
+                class="action-btn like-btn {% if post.is_liked_by %}liked{% endif %}"
                 title="{% if post.is_liked_by %}Unlike{% else %}Like{% endif %}">
                 <i class="bi {% if post.is_liked_by %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
-                <span>{{ post.likes.count }}</span>
+                <span class="action-count">{{ post.likes.count }}</span>
             </button>
 
-            <!-- Comment -->
-            <button class="btn btn-sm btn-outline-secondary" onclick="openCommentModal('{{ post.id }}')" title="Comment">
+            <!-- Comment Button -->
+            <button class="action-btn comment-btn" onclick="openCommentModal('{{ post.id }}')" title="Comment">
                 <i class="bi bi-chat"></i>
-                <span>{{ post.comments.count }}</span>
+                <span class="action-count">{{ post.comments.count }}</span>
             </button>
         </div>
 
-        <!-- Right: Save + Share -->
-        <div class="d-flex align-items-center gap-2">
-            <!-- Save -->
-           <!-- Save -->
-<form hx-post="{% url 'toggle_save_post' post.id %}" 
-      hx-target="closest .complaint-card"
-      hx-swap="outerHTML"
-      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-    {% if post.id in saved_posts %}
-        <button type="submit" class="btn btn-sm btn-warning" title="Unsave">
-            <i class="bi bi-bookmark-fill text-dark"></i>
-        </button>
-    {% else %}
-        <button type="submit" class="btn btn-sm btn-outline-primary" title="Save">
-            <i class="bi bi-bookmark text-primary"></i>
-        </button>
-    {% endif %}
-</form>
+        <!-- Right: Save & Share -->
+        <div class="utility-buttons">
+            <!-- Save Button (HTMX powered) -->
+            <form hx-post="{% url 'toggle_save_post' post.id %}" 
+                  hx-target="closest .tweet-card"
+                  hx-swap="outerHTML"
+                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                  class="save-form">
+                {% if post.id in saved_posts %}
+                    <button type="submit" class="action-btn save-btn saved" title="Unsave">
+                        <i class="bi bi-bookmark-fill"></i>
+                    </button>
+                {% else %}
+                    <button type="submit" class="action-btn save-btn" title="Save">
+                        <i class="bi bi-bookmark"></i>
+                    </button>
+                {% endif %}
+            </form>
 
-
-            <!-- Share -->
-            <button type="button" class="btn btn-sm btn-outline-success" 
+            <!-- Share Button -->
+            <button type="button" class="action-btn share-btn" 
                 onclick="copyToClipboard('{{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}')" 
                 title="Share Post">
                 <i class="bi bi-share"></i>

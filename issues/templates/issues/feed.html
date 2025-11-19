@@ -5,9 +5,481 @@
 
 {% block content %}
 
+<!-- Custom CSS for Twitter-Style Feed -->
+<style>
+    /* VARIABLES & RESETS */
+    :root {
+        --color-primary: #1da1f2; /* Twitter Blue */
+        --color-secondary: #000;
+        --color-text-subtle: #657786; /* Grey text */
+        --color-border: #ebeef0;
+        --color-background-hover: #f5f8fa;
+        --color-resolved: #17bf63; /* Green */
+        --color-pending: #ffad1f; /* Yellow/Orange */
+        --color-rejected: #e0245e; /* Red/Pink */
+        --shadow-elevation: 0 1px 3px rgba(0, 0, 0, 0.05);
+        --transition-duration: 0.2s;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        background-color: #f7f9fb; /* Light off-white background */
+    }
+
+    /* FEED LAYOUT */
+    .container {
+        display: flex;
+        justify-content: center;
+        padding: 20px 0;
+    }
+
+    #complaints-container {
+        width: 100%;
+        max-width: 640px; /* Slightly wider column for card feel */
+        /* Removed border-left/right to allow cards to float */
+        background-color: transparent; /* Use body background */
+        padding: 0 15px; /* Add horizontal padding to prevent cards from touching screen edges on mobile/smaller screens */
+    }
+
+    /* TWEET CARD STYLING (Now "Floating Card" Style) */
+    .tweet-card {
+        padding: 15px;
+        /* Replaced border-bottom with full card styling for professional look */
+        border: 1px solid var(--color-border);
+        border-radius: 12px; 
+        margin-bottom: 15px; /* Added space between cards */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Subtle professional shadow */
+        background-color: #fff;
+        cursor: pointer;
+        transition: box-shadow var(--transition-duration), transform var(--transition-duration);
+    }
+
+    .tweet-card:hover {
+        background-color: #fff; /* Keep background white */
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Slightly lifted shadow on hover */
+        transform: translateY(-2px); /* Subtle lift animation */
+    }
+
+    /* HEADER */
+    .tweet-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+    .user-info-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        overflow: hidden;
+        background-color: var(--color-border);
+        flex-shrink: 0; /* Prevent avatar from shrinking */
+    }
+
+    .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-initial {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-primary);
+        color: #fff;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    .user-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .username {
+        font-weight: bold;
+        font-size: 1.05rem;
+        color: var(--color-secondary);
+        transition: color var(--transition-duration);
+    }
+
+    .username:hover {
+        text-decoration: underline;
+    }
+
+    .meta-info {
+        font-size: 0.85rem;
+        color: var(--color-text-subtle);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 2px;
+    }
+
+    .meta-info .icon-location {
+        font-size: 0.9rem;
+    }
+
+    /* STATUS BADGE */
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: bold;
+        padding: 4px 8px;
+        border-radius: 9999px;
+        text-transform: uppercase;
+        align-self: flex-start;
+        opacity: 0.8;
+    }
+
+    .status-resolved {
+        background-color: var(--color-resolved);
+        color: #fff;
+    }
+
+    .status-pending {
+        background-color: var(--color-pending);
+        color: #000;
+    }
+
+    .status-rejected {
+        background-color: var(--color-rejected);
+        color: #fff;
+    }
+    
+    /* POST BODY & MEDIA */
+    .tweet-body {
+        padding-left: 50px; /* Align with content, past the avatar */
+    }
+
+    .post-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--color-secondary);
+        margin-top: 0;
+        margin-bottom: 5px;
+    }
+
+    .post-description {
+        font-size: 1rem;
+        line-height: 1.35;
+        color: var(--color-secondary);
+        margin-bottom: 10px;
+        white-space: pre-wrap; /* Allows for multiline formatting */
+    }
+
+    .post-media {
+        padding-left: 50px;
+        margin-bottom: 10px;
+    }
+
+    .media-image {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid var(--color-border);
+        transition: opacity var(--transition-duration);
+    }
+    
+    /* ACTIONS BAR */
+    .tweet-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-left: 50px;
+        margin-top: 5px;
+        color: var(--color-text-subtle);
+    }
+    
+    .action-buttons, .utility-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: none;
+        border: none;
+        color: var(--color-text-subtle);
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 9999px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: background-color var(--transition-duration), color var(--transition-duration);
+    }
+    
+    .action-btn i {
+        font-size: 1.1rem;
+    }
+
+    /* Action Specific Styles */
+    .like-btn:hover {
+        color: var(--color-rejected);
+        background-color: rgba(224, 36, 94, 0.1);
+    }
+    .like-btn.liked {
+        color: var(--color-rejected);
+    }
+
+    .comment-btn:hover {
+        color: var(--color-primary);
+        background-color: rgba(29, 161, 242, 0.1);
+    }
+    
+    .share-btn:hover {
+        color: var(--color-resolved);
+        background-color: rgba(23, 191, 99, 0.1);
+    }
+    
+    .save-btn:hover, .save-btn.saved {
+        color: #ffad1f; /* Warning/Save color */
+        background-color: rgba(255, 173, 31, 0.1);
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        padding: 40px;
+        text-align: center;
+        color: var(--color-text-subtle);
+        background-color: #fff;
+        border: 1px solid var(--color-border); /* Added for consistency with cards */
+        border-radius: 12px; /* Added for consistency with cards */
+        margin-bottom: 15px; /* Added for consistency with cards */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Added for consistency with cards */
+    }
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 10px;
+    }
+    .empty-state h5 {
+        color: var(--color-secondary);
+        font-weight: 600;
+    }
+    .empty-state .btn-primary {
+        margin-top: 15px;
+        background-color: var(--color-primary);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 9999px;
+        transition: opacity var(--transition-duration);
+    }
+    .empty-state .btn-primary:hover {
+        opacity: 0.9;
+    }
+
+    /* MODAL STYLING (Modernized) */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: none; /* Controlled by JS */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity var(--transition-duration) ease-in-out;
+    }
+
+    .modal-overlay.open {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal-content {
+        background: #fff;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: var(--shadow-elevation);
+        transform: scale(0.95);
+        transition: transform var(--transition-duration) ease-in-out;
+    }
+    
+    .modal-overlay.open .modal-content {
+        transform: scale(1);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .modal-header h2 {
+        font-size: 1.3rem;
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+        transition: background-color var(--transition-duration);
+    }
+    .close-btn:hover {
+        background-color: var(--color-background-hover);
+    }
+
+    .modal-body {
+        padding: 20px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .comments-section h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-top: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .loading-spinner {
+        text-align: center;
+        padding: 20px;
+        color: var(--color-text-subtle);
+    }
+    .loading-spinner i {
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+
+<!-- Necessary JavaScript functions (moved from feed.js) -->
+<script>
+    // HTMX CSRF Configuration
+    document.body.addEventListener('htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = "{{ csrf_token }}";
+    });
+
+    // Function to open the comment modal and load content
+    function openCommentModal(postId) {
+        const modal = document.getElementById('comment-modal');
+        const modalInfo = document.getElementById('modal-complaint-info');
+        const commentsList = document.getElementById('comments-list');
+        const commentForm = document.getElementById('comment-form-container');
+
+        // 1. Set the loading state
+        modalInfo.innerHTML = <div class="loading-spinner">Loading Post Details...</div>;
+        commentsList.innerHTML = <div class="loading-spinner"><i class="bi bi-arrow-repeat"></i> Loading comments...</div>;
+        commentForm.innerHTML = ''; // Clear form placeholder
+
+        // 2. Open the modal with transition
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden'; // Prevent body scroll
+
+        // 3. Trigger HTMX requests to load data (Assuming your Django views handle these endpoints)
+        // a. Load Post Info (e.g., a detail card for context)
+        htmx.ajax('GET', /posts/${postId}/detail_for_modal/, { target: modalInfo, swap: 'innerHTML' });
+
+        // b. Load Comments
+        htmx.ajax('GET', /posts/${postId}/comments/, { target: commentsList, swap: 'innerHTML' });
+
+        // c. Load Comment Form
+        htmx.ajax('GET', /posts/${postId}/comment_form/, { target: commentForm, swap: 'innerHTML' });
+    }
+
+    // Function to close the comment modal
+    function closeCommentModal(event) {
+        if (event) {
+            event.stopPropagation();
+        }
+        const modal = document.getElementById('comment-modal');
+        modal.classList.remove('open');
+        document.body.style.overflow = ''; // Restore body scroll
+        
+        // Clear content when closed to avoid stale data on next open (optional but good practice)
+        document.getElementById('modal-complaint-info').innerHTML = '';
+        document.getElementById('comments-list').innerHTML = '';
+        document.getElementById('comment-form-container').innerHTML = '';
+    }
+
+    // Function to handle outside click to close modal
+    document.getElementById('comment-modal').addEventListener('click', (event) => {
+        if (event.target === document.getElementById('comment-modal')) {
+            closeCommentModal();
+        }
+    });
+
+
+    // Function to copy URL to clipboard (moved from feed.js)
+    function copyToClipboard(text) {
+        // Use a temporary textarea for clipboard operations within iframes
+        const tempInput = document.createElement('textarea');
+        tempInput.value = text;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        try {
+            document.execCommand('copy');
+            // Show a temporary visual feedback (instead of alert)
+            const feedback = document.createElement('div');
+            feedback.className = 'clipboard-feedback';
+            feedback.textContent = 'Link copied!';
+            document.body.appendChild(feedback);
+            setTimeout(() => {
+                feedback.remove();
+            }, 1500);
+        } catch (err) {
+            console.error('Could not copy text: ', err);
+        }
+        document.body.removeChild(tempInput);
+    }
+</script>
+
+<!-- Add temporary style for clipboard feedback (since we can't edit base.html) -->
+<style>
+    .clipboard-feedback {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--color-primary);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 2000;
+        opacity: 0;
+        animation: fadeInOut 1.5s ease-in-out forwards;
+    }
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translate(-50%, 10px); }
+        20% { opacity: 1; transform: translate(-50%, 0); }
+        80% { opacity: 1; transform: translate(-50%, 0); }
+        100% { opacity: 0; transform: translate(-50%, -10px); }
+    }
+</style>
 
 <!-- Main Content -->
-<div class="container">
+<main class="container">
     <div id="complaints-container">
     {% for post in posts %}
         {% include 'issues/partials/post_card.html' %}
@@ -16,49 +488,45 @@
             <div class="empty-icon">💬</div>
             <h5>No issues reported yet</h5>
             <p>Be the first to report a civic issue in your area</p>
-            <a href="{% url 'create_issue_post' %}" class="btn btn-primary">Report an Issue</a>
+            <a href="{% url 'create_issue_post' %}" class="btn-primary">Report an Issue</a>
         </div>
     {% endfor %}
     </div>
-</div>
-<div id="comment-modal" class="modal-overlay">
+</main>
+
+<!-- Comment Modal -->
+<div id="comment-modal" class="modal-overlay" aria-modal="true" role="dialog">
     <div class="modal-content">
         <div class="modal-header">
             <h2>Comments</h2>
-            <button class="close-btn" onclick="closeCommentModal(event)">
+            <button class="close-btn" onclick="closeCommentModal(event)" aria-label="Close comments">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
         <div class="modal-body">
+            <!-- Dynamic Post Info for Context -->
             <div id="modal-complaint-info"></div>
+
+            <!-- Comments Section -->
             <div class="comments-section">
-                <h3>Comments</h3>
-                <div id="comments-list" 
-                     hx-trigger="loadComments from:body" 
-                     hx-swap="innerHTML">
-                     <!-- Loading spinner while comments load -->
+                <h3>Comments Feed</h3>
+                <div id="comments-list">
+                     <!-- Content loaded via HTMX -->
                     <div class="loading-spinner">
                         <i class="bi bi-arrow-repeat"></i>
                         Loading comments...
                     </div> 
                 </div>
             </div>
-            <div id="comment-form-container"
-     hx-trigger="loadComments from:body"
-     hx-swap="innerHTML">
-                <!-- Form will load here -->
+            
+            <!-- Comment Submission Form -->
+            <div id="comment-form-container">
+                <!-- Content loaded via HTMX -->
             </div>
         </div>
     </div>
 </div>
-<!-- Add this in the head section -->
+
+<!-- Bootstrap Icons link is preserved in case it was used in base.html but included here for completeness -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-<link rel="stylesheet" href="{% static 'css/feed.css' %}">
-<script src="{% static 'js/feed.js' %}"></script>
-<script>
-    document.body.addEventListener('htmx:configRequest', (event) => {
-        // Include CSRF token in all HTMX requests
-        event.detail.headers['X-CSRFToken'] = "{{ csrf_token }}";
-    });
-</script>
 {% endblock %}

@@ -4,438 +4,471 @@
 {% block title %}Report a Civic Issue{% endblock %}
 
 {% block extra_css %}
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
 <style>
+    /* -------------------------------------------------------------------------
+    Base & Layout Styles - Optimized for Viewport Height (vh)
+    ------------------------------------------------------------------------- */
     body {
         font-family: 'Poppins', sans-serif;
-        background: linear-gradient(135deg, #0A6A77, #BFE3E6);
+        background: #f4f7f6;
         min-height: 100vh;
-    }
-
-    html, body {
-        height: 100%;
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+        overflow-y: auto; 
     }
 
     .main-container {
-        padding: 2rem 2rem; /* Increased padding for overall professional look */
-        max-width: 1600px; /* Increased max-width for better full-screen view */
+        max-width: 1200px; 
+        min-height: calc(100vh - 40px);
+        padding: 2rem 1.8rem; /* Further adjusted padding */
         margin: 0 auto;
-    }
-
-    .cards-row {
-        display: flex;
-        gap: 2rem;
-        align-items: stretch;
-        justify-content: center; /* Center the cards for larger screens */
-    }
-
-    .report-card,
-    .eco-info-card {
-        background: rgba(255, 255, 255, 0.97);
-        border-radius: 20px;
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-        padding: 2rem;
         width: 100%;
-        box-sizing: border-box;
-        backdrop-filter: blur(10px);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        flex-grow: 1;
         display: flex;
-        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
 
-    .report-card:hover,
-    .eco-info-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-    }
-
+    /* -------------------------------------------------------------------------
+    Report Card Style
+    ------------------------------------------------------------------------- */
     .report-card {
-        background: rgba(255, 255, 255, 0.98);
-        flex: 2; /* Make the form card wider */
-        max-width: 700px; /* Adjusted max-width for a more balanced layout */
-    }
-
-    .eco-info-card {
-        border: 2px solid #0A6A77;
-        flex: 1; /* Make eco-info card a bit narrower */
-        max-width: 450px;
-    }
-
-    .form-container,
-    .eco-info-container {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .form-content {
-        flex: 1;
-        overflow-y: auto;
-        padding-right: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .eco-info-content {
-        flex: 1;
-        overflow-y: auto;
-        margin-bottom: 1.5rem;
-    }
-
-    .form-content::-webkit-scrollbar,
-    .eco-info-content::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .form-content::-webkit-scrollbar-track,
-    .eco-info-content::-webkit-scrollbar-track {
-        background: #f8f9fa;
-        border-radius: 3px;
-    }
-
-    .form-content::-webkit-scrollbar-thumb,
-    .eco-info-content::-webkit-scrollbar-thumb {
-        background: #0A6A77;
-        border-radius: 3px;
-    }
-
-    .form-label {
-        font-weight: 500;
-        color: #084F57;
-        margin-bottom: 0.75rem;
-        display: block;
-        font-size: 0.95rem;
-    }
-
-    input,
-    textarea,
-    select {
-        border-radius: 12px !important;
-        border: 2px solid #e9ecef !important;
-        padding: 1rem !important;
-        font-size: 0.95rem;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        max-width: 100% !important;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        background: #fafbfc;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-        border-color: #0A6A77 !important;
-        box-shadow: 0 0 0 3px rgba(10, 106, 119, 0.1) !important;
-        outline: none !important;
-        background: #fff;
-    }
-
-    textarea {
-        min-height: 120px;
-        resize: vertical;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #0A6A77, #084F57);
-        border: none;
-        border-radius: 12px;
-        font-weight: 500;
-        padding: 1rem 2rem;
-        transition: all 0.3s ease;
+        background: #ffffff;
+        border-radius: 14px; 
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07); 
+        padding: 2rem; /* Reduced card internal padding */
         width: 100%;
-        font-size: 1rem;
-        box-shadow: 0 4px 15px rgba(10, 106, 119, 0.3);
+        max-height: 95vh;
     }
 
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #084F57, #0A6A77);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(10, 106, 119, 0.4);
-    }
-
-    .eco-info-content ul {
-        padding-left: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .eco-info-content li {
-        margin-bottom: 0.75rem;
-        line-height: 1.5;
-        color: #2c3e50;
-    }
-
-    .form-group {
-        margin-bottom: 2rem;
-    }
-
-    .submit-section {
-        border-top: 2px solid #f1f3f4;
-        padding-top: 1.5rem;
-        margin-top: auto;
-    }
-
+    /* -------------------------------------------------------------------------
+    Header and Typography
+    ------------------------------------------------------------------------- */
     .page-header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem; /* Reduced margin */
     }
 
     .page-header h4 {
-        color: #084F57;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        font-size: 1.75rem;
+        color: #0A6A77;
+        font-weight: 700;
+        margin-bottom: 0.1rem; 
+        font-size: 1.8rem; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px; 
     }
 
     .page-header p {
         color: #6c757d;
-        font-size: 1.1rem;
+        font-size: 0.95rem; 
+        margin: 0.1rem auto 0;
     }
 
-    .eco-header {
-        margin-bottom: 1.5rem;
+    /* -------------------------------------------------------------------------
+    Form Grid and Fields
+    ------------------------------------------------------------------------- */
+    .form-content {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 1rem; /* Reduced gap */
     }
 
-    .eco-header h5 {
-        color: #084F57;
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    /* Description and Image need to span both columns */
+    .form-group:nth-of-type(3), 
+    .form-group:nth-of-type(4) { 
+        grid-column: span 2;
+    }
+
+    .form-label {
         font-weight: 600;
-        font-size: 1.4rem;
-        margin-bottom: 0.75rem;
+        color: #34495e;
+        margin-bottom: 0.3rem; /* Further reduced margin */
+        display: block;
+        font-size: 0.85rem; 
     }
 
-    /* Mobile Responsive Design */
-    @media (max-width: 991px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select {
+        border-radius: 8px !important; 
+        border: 1px solid #dfe6e9 !important;
+        padding: 0.8rem 1rem !important; /* Slightly reduced padding */
+        font-size: 0.9rem; 
+        width: 100% !important;
+        box-sizing: border-box !important;
+        background: #fcfdff;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+        border-color: #0A6A77 !important;
+        box-shadow: 0 0 0 3px rgba(10, 106, 119, 0.1) !important;
+        outline: none !important;
+    }
+
+    textarea {
+        min-height: 100px; /* Further reduced min-height */
+        resize: vertical;
+    }
+
+    /* -------------------------------------------------------------------------
+    Drag and Drop Area for Image Upload (COMPACTED)
+    ------------------------------------------------------------------------- */
+    .drag-drop-area {
+        border: 2px dashed #a0d1d6;
+        border-radius: 8px;
+        padding: 1rem; /* Significantly reduced padding */
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+        background-color: #f7fbfb;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 90px; /* Reduced minimum height */
+        position: relative;
+    }
+
+    .drag-drop-area:hover,
+    .drag-drop-area.highlight {
+        background-color: #e0f2f4;
+        border-color: #0A6A77;
+    }
+
+    .drag-drop-area .icon-text {
+        color: #0A6A77;
+        font-size: 1rem; /* Reduced font size */
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+    }
+    
+    .drag-drop-area .file-name {
+        font-size: 0.8rem; /* Reduced font size */
+        color: #555;
+        margin-top: 0.3rem;
+        font-weight: 500;
+    }
+
+    .drag-drop-area input[type="file"] {
+        opacity: 0;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        cursor: pointer;
+        display: block;
+    }
+    
+    .drag-drop-area i {
+        font-size: 2rem; /* Reduced icon size */
+        color: #0A6A77;
+        margin-bottom: 0.3rem;
+    }
+
+    /* -------------------------------------------------------------------------
+    Button Styles
+    ------------------------------------------------------------------------- */
+    .submit-section {
+        border-top: 1px solid #f1f3f4;
+        padding-top: 1rem; /* Reduced padding */
+        margin-top: 1.2rem; /* Reduced margin */
+    }
+
+    .btn-primary {
+        background: #0A6A77;
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 0.8rem 1.6rem; /* Reduced padding */
+        font-size: 0.95rem; 
+        box-shadow: 0 4px 12px rgba(10, 106, 119, 0.25);
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: #084F57;
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(10, 106, 119, 0.35);
+    }
+    
+    /* -------------------------------------------------------------------------
+    Mobile Responsive Design
+    ------------------------------------------------------------------------- */
+    @media (max-width: 992px) {
         .main-container {
-            padding: 1.5rem 1rem;
-        }
-        
-        .cards-row {
-            flex-direction: column;
-            gap: 2rem;
-            min-height: auto;
-            align-items: center;
-        }
-        
-        .report-card,
-        .eco-info-card {
-            flex: none;
-            padding: 1.5rem;
-            border-radius: 16px;
-            max-width: 100%;
-            margin: 0 1rem; /* Added margin to left and right for space */
-        }
-        
-        .eco-info-card {
-            flex: none;
-            margin-top: 0;
-        }
-        
-        .form-content {
-            overflow-y: visible;
-            margin-bottom: 1rem;
+            max-width: 850px;
+            padding: 1.8rem 1.5rem;
         }
     }
-
+    
     @media (max-width: 768px) {
         .main-container {
-            padding: 1rem 0.5rem;
+            padding: 1.2rem 1rem; /* Further reduced mobile padding */
+            align-items: flex-start;
+            min-height: auto;
+            max-width: 100%;
         }
-        
-        .cards-row {
-            gap: 1.5rem;
-        }
-        
-        .report-card,
-        .eco-info-card {
-            padding: 1.25rem;
-            border-radius: 14px;
-            margin: 0 0.5rem; /* Added margin to left and right for space */
+
+        .report-card {
+            padding: 1.2rem;
         }
         
         .page-header h4 {
             font-size: 1.5rem;
         }
         
-        .page-header p {
-            font-size: 1rem;
+        .form-content {
+            grid-template-columns: 1fr;
+            gap: 0.8rem; /* Reduced gap */
         }
         
-        .eco-header h5 {
-            font-size: 1.25rem;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .main-container {
-            padding: 0.75rem 0.25rem;
+        .form-group:nth-of-type(3), 
+        .form-group:nth-of-type(4) { 
+            grid-column: span 1;
         }
         
-        .cards-row {
-            gap: 1rem;
-        }
-        
-        .report-card,
-        .eco-info-card {
-            padding: 1rem;
-            margin: 0 0.25rem; /* Added margin to left and right for space */
-            border-radius: 12px;
-        }
-        
-        input,
+        input:not([type="checkbox"]):not([type="radio"]),
         textarea,
         select {
-            padding: 0.75rem !important;
+            padding: 0.7rem 0.9rem !important;
+            font-size: 0.85rem;
+        }
+        
+        textarea {
+            min-height: 80px; /* Minimized height */
+        }
+
+        .drag-drop-area {
+            padding: 0.8rem;
+            min-height: 70px; /* Minimized height on mobile */
+        }
+
+        .drag-drop-area i {
+            font-size: 1.6rem;
+        }
+        .drag-drop-area .icon-text {
             font-size: 0.9rem;
-            border-radius: 10px !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .main-container {
+            padding: 0.8rem 0.4rem;
+        }
+        
+        .report-card {
+            padding: 0.9rem;
+            border-radius: 10px;
+        }
+
+        .page-header h4 {
+            font-size: 1.3rem;
         }
         
         .btn-primary {
-            padding: 0.875rem 1.5rem;
-            font-size: 0.95rem;
-            border-radius: 10px;
+            padding: 0.7rem 1rem;
+            font-size: 0.9rem;
         }
-        
-        .page-header h4 {
-            font-size: 1.35rem;
-        }
-        
-        .eco-header h5 {
-            font-size: 1.15rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
+
+        .drag-drop-area i {
+            font-size: 1.4rem;
         }
     }
 
-    /* Ensure no horizontal overflow */
-    * {
-        box-sizing: border-box;
-    }
-    
-    .container-fluid {
-        padding-left: 0;
-        padding-right: 0;
-        max-width: 100%;
-        overflow-x: hidden;
-    }
-    
-    .row {
-        margin-left: 0;
-        margin-right: 0;
-        max-width: 100%;
-    }
-
-    /* Enhanced visual elements */
+    /* Utility */
     .text-danger {
-        color: #dc3545 !important;
+        color: #e74c3c !important;
+    }
+    #id_reported_latitude, #id_reported_longitude {
+        display: none;
     }
 
-    .text-muted {
-        color: #6c757d !important;
-    }
+    /* ... your existing CSS styles ... */
 
-    /* Improved focus states for accessibility */
-    input:focus,
-    textarea:focus,
-    select:focus,
-    .btn-primary:focus {
-        outline: 2px solid #0A6A77;
-        outline-offset: 2px;
-    }
+/* -------------------------------------------------------------------------
+   LOADING POPUP STYLES
+   ------------------------------------------------------------------------- */
+#loading-overlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+    z-index: 10000; /* Ensure it's on top of everything */
+    justify-content: center;
+    align-items: center;
+}
+
+#loading-overlay .spinner-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: #ffffff;
+    padding: 25px 40px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+#loading-overlay .spinner-box i {
+    font-size: 1.5rem;
+    color: #0A6A77; /* Your theme color */
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid main-container">
-    <div class="cards-row">
-        <div class="report-card">
-            <header class="page-header">
-                <h4>📢 Report a Civic Issue</h4>
-                <p class="text-muted">Help improve your city by reporting problems.</p>
-            </header>
+    
+    <div class="report-card">
+        <header class="page-header">
+            <h4><i class="fas fa-bullhorn"></i> Report a Civic Issue</h4>
+            <p class="text-muted">Quickly submit details about the problem you've noticed.</p>
+        </header>
 
-            <form method="POST" enctype="multipart/form-data" class="form-container">
-                {% csrf_token %}
+        <form id="issue-form" method="POST" enctype="multipart/form-data" class="form-container">
+            {% csrf_token %}
 
-                <div class="form-content">
-                    <div class="form-group">
-                        <label class="form-label">Issue Title <span class="text-danger">*</span></label>
-                        {{ form.title }}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Description <span class="text-danger">*</span></label>
-                        {{ form.description }}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Relevant Department <span class="text-danger">*</span></label>
-                        {{ form.department }}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Upload Image</label>
-                        {{ form.image }}
-                    </div>
-                    
-                    {{ form.reported_latitude }}
-                    {{ form.reported_longitude }}
-                </div>
-
-                <div class="submit-section">
-                    <button type="submit" class="btn btn-primary">
-                        Submit Issue
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <div class="eco-info-card">
-            <div class="eco-info-container">
-                <div class="eco-header">
-                    <h5>💰 Earn EcoCoins by Reporting Issues!</h5>
-                    <p>Your civic contributions are rewarded! Here's how:</p>
+            <div class="form-content">
+                
+                <div class="form-group">
+                    <label class="form-label">Issue Title <span class="text-danger">*</span></label>
+                    {{ form.title }}
                 </div>
                 
-                <div class="eco-info-content">
-                    <ul>
-                        <li><strong>Likes:</strong> Earn <strong>1 EcoCoin</strong> per like on your issue.</li>
-                        <li><strong>Comments:</strong> Earn <strong>2 EcoCoins</strong> per comment.</li>
-                        <li><strong>Resolution Bonus:</strong> Extra reward when your issue is marked as resolved.</li>
-                        <li><strong>Shares:</strong> Earn 3 EcoCoins each time your issue is shared.</li>
-                        <li><strong>First Response Bonus:</strong> Earn 5 EcoCoins when you post the first comment on a new issue.</li>
-                        <li><strong>Daily Activity Bonus:</strong> Earn 10 EcoCoins for participating every day.</li>
-                        <li><strong>Helpful Feedback:</strong> Earn 4 EcoCoins when your comment is marked as helpful by others.</li>
-                        <li><strong>Milestone Achievement:</strong> Earn 20 EcoCoins when your issue reaches 100 likes.</li>
-                        <li><strong>Community Support:</strong> Earn 8 EcoCoins when you help resolve other users' issues.</li>
-                    </ul>
-                    
-                    <p><em>The more impactful and engaging your issue posts are, the more EcoCoins you can earn!</em></p>
+                <div class="form-group">
+                    <label class="form-label">Relevant Department <span class="text-danger">*</span></label>
+                    {{ form.department }}
                 </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Description <span class="text-danger">*</span></label>
+                    {{ form.description }}
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Upload Image (Optional)</label>
+                    
+<div id="drop-area" class="drag-drop-area">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span class="icon-text">Drag & Drop your image here or Click to Browse</span>
+                        <span class="file-name" id="file-name-display"></span>
+                        {{ form.image }} 
+</div>
+                </div>
+                
+                {{ form.reported_latitude }}
+                {{ form.reported_longitude }}
+                
             </div>
-        </div>
+<div id="loading-overlay">
+    <div class="spinner-box">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Verifying with AI...</span>
     </div>
 </div>
+            <div class="submit-section">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Submit Issue
+                </button>
+            </div>
+        </form>
+    </div>
+        
+</div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    if (navigator.geolocation) {
+    // --- UPDATED: Form Submission Loading Popup ---
+    const issueForm = document.getElementById('issue-form');
+    const loadingOverlay = document.getElementById('loading-overlay'); // Get the new popup
+
+    if (issueForm && loadingOverlay) {
+        issueForm.addEventListener('submit', function(event) {
+            // Check if the form is valid from the browser's perspective
+            if (issueForm.checkValidity()) {
+                // ✅ Show the popup overlay
+                loadingOverlay.style.display = 'flex';
+            }
+        });
+    }
+
+    // --- Geolocation script (unchanged) ---
+    const latField = document.getElementById("id_reported_latitude");
+    const lonField = document.getElementById("id_reported_longitude");
+
+    if (navigator.geolocation && latField && lonField) {
         navigator.geolocation.getCurrentPosition(
             function (position) {
-                document.getElementById("id_reported_latitude").value = position.coords.latitude;
-                document.getElementById("id_reported_longitude").value = position.coords.longitude;
-                console.log("Geolocation coordinates set:", position.coords.latitude, position.coords.longitude);
+                latField.value = position.coords.latitude;
+                lonField.value = position.coords.longitude;
             },
             function (error) {
                 console.warn("Geolocation error:", error.message);
-                alert("Unable to retrieve your location. Please enter it manually.");
             }
         );
-    } else {
-        console.warn("Geolocation is not supported by this browser.");
+    }
+
+    // --- Drag and Drop Script (unchanged) ---
+    // (The rest of your drag-and-drop and geolocation JS remains here...)
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('id_image');
+    const fileNameDisplay = document.getElementById('file-name-display');
+
+    if (dropArea && fileInput && fileNameDisplay) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+        });
+        dropArea.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFileSelect, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        function handleDrop(e) {
+            const files = e.dataTransfer.files;
+            fileInput.files = files;
+            updateFileNameDisplay(files);
+        }
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            updateFileNameDisplay(files);
+        }
+        function updateFileNameDisplay(files) {
+            if (files.length > 0) {
+                fileNameDisplay.textContent = files[0].name;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        }
+        if (fileInput.files.length > 0) {
+            updateFileNameDisplay(fileInput.files);
+        }
     }
 });
 </script>
